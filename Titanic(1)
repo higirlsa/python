@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_extraction import DictVectorizer
+
+#导入数据
+path_1 = "C:/Users/tzm/Desktop/python3/data/Titanic/train.csv"
+path_2 = "C:/Users/tzm/Desktop/python3/data/Titanic/test.csv"
+titanic_train = pd.read_csv(path_1)
+titanic_test = pd.read_csv(path_2)
+
+#选取特征
+x_train = titanic_train[["Pclass","Age","Sex"]]
+y_train = titanic_train["Survived"]
+x_test = titanic_test[["Pclass","Age","Sex"]]
+
+
+#缺失值填充
+x_train["Age"].fillna(x_train["Age"].mean(),inplace = True)
+x_test["Age"].fillna(x_train["Age"].mean(),inplace = True)
+
+#字典特征抽取
+# 1)转化为字典
+x_train = x_train.to_dict(orient = "records")
+x_test = x_test.to_dict(orient = "records")
+
+# 2)特征提取
+transfer = DictVectorizer()  #实例化一个转换器类
+x_train = transfer.fit_transform(x_train)
+x_test = transfer.transform(x_test)
+print(x_train)
+
+#决策树预估计
+estimator = DecisionTreeClassifier(criterion="entropy")
+estimator.fit(x_train,y_train)
+
+#存活率预估
+y_predict = estimator.predict(x_test)
+
+
+#导出数据
+passenger_id = titanic_test["PassengerId"]
+titanic_test = pd.DataFrame({"PassengerId":passenger_id, "Survived":y_predict} )
+titanic_test.to_csv("titanic_test.csv", index=False)
